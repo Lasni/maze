@@ -1,14 +1,38 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.14.2/matter.min.js" integrity="sha512-pi0tSRZdlNRZeANPwdAIHRAYg6gZZV6QlAiyHXn5TYqLzBKE9jlttO/QgYLMhISD6oNv2kPsVelx+n5nw0FqKA==" crossorigin="anonymous"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.14.2/matter.min.js"
+      integrity="sha512-pi0tSRZdlNRZeANPwdAIHRAYg6gZZV6QlAiyHXn5TYqLzBKE9jlttO/QgYLMhISD6oNv2kPsVelx+n5nw0FqKA=="
+      crossorigin="anonymous"
+    ></script>
     <style>
       body {
         margin: 0;
       }
+      .hidden {
+        display: none !important;
+      }
+      h1 {
+        color: white;
+        font-size: 64px;
+      }
+      .winner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        z-index: 1;
+        height: 100vh;
+        width: 100vw;
+      }
     </style>
   </head>
   <body>
+    <div class="winner hidden">
+      <h1>You Win!</h1>
+      <button id="restart-btn">Play again</button>
+    </div>
     <script src="index.js"></script>
   </body>
 </html>

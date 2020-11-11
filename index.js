@@ -1,16 +1,12 @@
 const { Engine, Render, Runner, World, Bodies, Body, Events } = Matter;
 
 // Variables
-const width = window.innerWidth;
-const height = window.innerHeight;
-const cells = 6;
-// const cellsHorizontal = 12; //
-// const cellsVertical = 3; //
-// const unitLengthX = width / cellsHorizontal //
-// const unitLengthY = height / cellsVertical //
-const unitWidth = width / cells;
-const unitHeight = height / cells;
-
+const width = window.innerWidth - 4; // -4 to remove the horizontal scrollbar
+const height = window.innerHeight - 4; // -4 to remove the vertical scrollbar
+const cellsHorizontal = 14;
+const cellsVertical = 7;
+const unitWidthX = width / cellsHorizontal;
+const unitHeightY = height / cellsVertical;
 
 const engine = Engine.create();
 engine.world.gravity.y = 0; // disables gravity
@@ -19,7 +15,7 @@ const render = Render.create({
   element: document.body,
   engine: engine,
   options: {
-    wireframes: true,
+    wireframes: false,
     width,
     height,
   },
@@ -65,23 +61,23 @@ const shuffle = (arr) => {
 };
 
 // Grid
-const grid = Array(cells)
+const grid = Array(cellsVertical)
   .fill(null)
-  .map(() => Array(cells).fill(false));
+  .map(() => Array(cellsHorizontal).fill(false));
 
 // Verticals
-const verticals = Array(cells)
+const verticals = Array(cellsVertical)
   .fill(null)
-  .map(() => Array(cells - 1).fill(false));
+  .map(() => Array(cellsHorizontal - 1).fill(false));
 
 // Horizontals
-const horizontals = Array(cells - 1)
+const horizontals = Array(cellsVertical - 1)
   .fill(null)
-  .map(() => Array(cells).fill(false));
+  .map(() => Array(cellsHorizontal).fill(false));
 
 // Starting point
-const startRow = Math.floor(Math.random() * cells);
-const startColumn = Math.floor(Math.random() * cells);
+const startRow = Math.floor(Math.random() * cellsVertical);
+const startColumn = Math.floor(Math.random() * cellsHorizontal);
 
 // Maze generation algorithm
 const stepThroughCell = (row, column) => {
@@ -108,9 +104,9 @@ const stepThroughCell = (row, column) => {
     // checking left, right, up and down bounds
     if (
       nextRow < 0 ||
-      nextRow >= cells ||
+      nextRow >= cellsVertical ||
       nextColumn < 0 ||
-      nextColumn >= cells
+      nextColumn >= cellsHorizontal
     ) {
       continue; // skip to the next neighbor
     }
@@ -152,13 +148,16 @@ horizontals.forEach((row, rowIndex) => {
     }
     // draw a wall
     const wall = Bodies.rectangle(
-      columnIndex * unitWidth + unitWidth / 2, // (x-axis)
-      rowIndex * unitHeight + unitHeight, // (y-axis)
-      unitWidth, // rectangle width aka wall length
+      columnIndex * unitWidthX + unitWidthX / 2, // (x-axis)
+      rowIndex * unitHeightY + unitHeightY, // (y-axis)
+      unitWidthX, // rectangle width aka wall length
       2, // rectangle height aka wall thickness
       {
         isStatic: true,
         label: "wall",
+        render: {
+          fillStyle: "red",
+        },
       }
     );
     // add the wall to the world
@@ -173,13 +172,16 @@ verticals.forEach((row, rowIndex) => {
       return;
     }
     const wall = Bodies.rectangle(
-      columnIndex * unitWidth + unitWidth, // (x-axis)
-      rowIndex * unitHeight + unitHeight / 2, // (y-axis)
+      columnIndex * unitWidthX + unitWidthX, // (x-axis)
+      rowIndex * unitHeightY + unitHeightY / 2, // (y-axis)
       2,
-      unitHeight,
+      unitHeightY,
       {
         isStatic: true,
         label: "wall",
+        render: {
+          fillStyle: "red",
+        },
       }
     );
     World.add(world, wall);
@@ -188,25 +190,32 @@ verticals.forEach((row, rowIndex) => {
 
 // Goal
 const goal = Bodies.rectangle(
-  width - unitWidth / 2, // positions far right
-  height - unitHeight / 2, // positions far bottom
-  unitWidth * 0.5,
-  unitHeight * 0.5,
+  width - unitWidthX / 2, // positions far right
+  height - unitHeightY / 2, // positions far bottom
+  unitWidthX * 0.5,
+  unitHeightY * 0.5,
   {
     isStatic: true,
     label: "goal",
+    render: {
+      fillStyle: "green",
+    },
   }
 );
 World.add(world, goal);
 
 // Ball
+const ballRadius = Math.min(unitWidthX, unitHeightY) / 4;
 const ball = Bodies.circle(
-  unitWidth / 2, // positions far left
-  unitHeight / 2, // positions far top
-  unitWidth / 4,
+  unitWidthX / 2, // positions far left
+  unitHeightY / 2, // positions far top
+  ballRadius,
   {
     isStatic: false,
     label: "ball",
+    render: {
+      fillStyle: "yellow",
+    },
   }
 );
 World.add(world, ball);
@@ -240,7 +249,8 @@ Events.on(engine, "collisionStart", (e) => {
       labels.includes(collision.bodyA.label) &&
       labels.includes(collision.bodyB.label)
     ) {
-      // collapse the maze
+      // collapse the maze and display win message
+      document.querySelector(".winner").classList.remove("hidden");
       world.gravity.y = 1;
       world.bodies.forEach((body) => {
         if (body.label === "wall") {
@@ -250,4 +260,10 @@ Events.on(engine, "collisionStart", (e) => {
       });
     }
   });
+});
+
+// Restart button
+const restartButton = document.getElementById("restart-btn");
+restartButton.addEventListener("click", () => {
+  location.reload();
 });
