@@ -1,13 +1,19 @@
-const { Engine, Render, Runner, World, Bodies } = Matter;
+const { Engine, Render, Runner, World, Bodies, Body, Events } = Matter;
 
 // Variables
-const width = 600;
-const height = 600;
-const cells = 3;
+const width = window.innerWidth;
+const height = window.innerHeight;
+const cells = 6;
+// const cellsHorizontal = 12; //
+// const cellsVertical = 3; //
+// const unitLengthX = width / cellsHorizontal //
+// const unitLengthY = height / cellsVertical //
 const unitWidth = width / cells;
 const unitHeight = height / cells;
 
+
 const engine = Engine.create();
+engine.world.gravity.y = 0; // disables gravity
 const { world } = engine;
 const render = Render.create({
   element: document.body,
@@ -25,19 +31,19 @@ Runner.run(Runner.create(), engine);
 // Walls
 const walls = [
   // top
-  Bodies.rectangle(width / 2, 0, width, 40, {
+  Bodies.rectangle(width / 2, 0, width, 2, {
     isStatic: true,
   }),
   // bottom
-  Bodies.rectangle(width / 2, height, width, 40, {
+  Bodies.rectangle(width / 2, height, width, 2, {
     isStatic: true,
   }),
   // left
-  Bodies.rectangle(0, height / 2, 40, height, {
+  Bodies.rectangle(0, height / 2, 2, height, {
     isStatic: true,
   }),
   // right
-  Bodies.rectangle(width, height / 2, 40, height, {
+  Bodies.rectangle(width, height / 2, 2, height, {
     isStatic: true,
   }),
 ];
@@ -152,6 +158,7 @@ horizontals.forEach((row, rowIndex) => {
       2, // rectangle height aka wall thickness
       {
         isStatic: true,
+        label: "wall",
       }
     );
     // add the wall to the world
@@ -172,8 +179,75 @@ verticals.forEach((row, rowIndex) => {
       unitHeight,
       {
         isStatic: true,
+        label: "wall",
       }
     );
     World.add(world, wall);
+  });
+});
+
+// Goal
+const goal = Bodies.rectangle(
+  width - unitWidth / 2, // positions far right
+  height - unitHeight / 2, // positions far bottom
+  unitWidth * 0.5,
+  unitHeight * 0.5,
+  {
+    isStatic: true,
+    label: "goal",
+  }
+);
+World.add(world, goal);
+
+// Ball
+const ball = Bodies.circle(
+  unitWidth / 2, // positions far left
+  unitHeight / 2, // positions far top
+  unitWidth / 4,
+  {
+    isStatic: false,
+    label: "ball",
+  }
+);
+World.add(world, ball);
+
+// Controlling the ball
+document.addEventListener("keydown", (e) => {
+  // console.log(e);
+  const maxVelocity = 5;
+  const { x, y } = ball.velocity;
+  if (e.code === "ArrowUp") {
+    Body.setVelocity(ball, { x, y: Math.max(y - 5, -maxVelocity) });
+  }
+  if (e.code === "ArrowRight") {
+    Body.setVelocity(ball, { x: Math.min(x + 5, +maxVelocity), y });
+  }
+  if (e.code === "ArrowDown") {
+    Body.setVelocity(ball, { x, y: Math.min(y + 5, +maxVelocity) });
+  }
+  if (e.code === "ArrowLeft") {
+    Body.setVelocity(ball, { x: Math.max(x - 5, -maxVelocity), y });
+  }
+});
+
+// Collision
+Events.on(engine, "collisionStart", (e) => {
+  e.pairs.forEach((collision) => {
+    const labels = ["ball", "goal"];
+
+    // win condition
+    if (
+      labels.includes(collision.bodyA.label) &&
+      labels.includes(collision.bodyB.label)
+    ) {
+      // collapse the maze
+      world.gravity.y = 1;
+      world.bodies.forEach((body) => {
+        if (body.label === "wall") {
+          // update the static flag on the body object to false
+          Body.setStatic(body, false);
+        }
+      });
+    }
   });
 });
